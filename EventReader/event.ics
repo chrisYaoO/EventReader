@@ -1,0 +1,84 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+BEGIN:VEVENT
+SUMMARY:Test Event
+DTSTART:20260318T140000Z
+DTEND:20260318T150000Z
+END:VEVENT
+BEGIN:VEVENT
+LAST-MODIFIED:20260317T233228Z
+DTSTAMP:20260317T233228Z
+LOCATION:China
+X-ECAL-SCHEDULE:63ed7afb4c410f0c653621d8
+DTSTART:20260313T033000Z
+DTEND:20260313T043000Z
+SUMMARY:🏎 FORMULA 1 HEINEKEN CHINESE GRAND PRIX 2026 - Practice 1
+TRANSP:TRANSPARENT
+SEQUENCE:0
+UID:691e9a9e54aa88334d653b2b
+PRIORITY:5
+X-MICROSOFT-CDO-IMPORTANCE:1
+CLASS:PUBLIC
+DESCRIPTION:Follow all the action on F1 TV and F1.com. \n\nUnlock the insid
+ e world of F1 by signing up to F1 Unlocked at F1.com/F1Unlocked\n\nFollow o
+ n the go with F1 TV\nhttps://cal.f1.com/f/28Smsx/3vYLq\n\nVisit the Race Hu
+ b\nhttps://cal.f1.com/f/28SmsR/3vYLq\n\nFree sign up to F1 Unlocked\nhttps:
+ //cal.f1.com/f/28Smtg/3vYLq\n\nDownload the Official F1 Race Programme App\
+ nhttps://cal.f1.com/f/28Smtv/3vYLq\n\nWear your favourite teams colours wit
+ h F1 store\nhttps://cal.f1.com/f/28SmtL/3vYLq\n\nChoose where to watch a ra
+ ce with F1 Tickets\nhttps://cal.f1.com/f/28Smv6/3vYLq\n\nFollow us on Faceb
+ ook\nhttps://cal.f1.com/f/28Smvq/3vYLq\n\nFollow us on X\nhttps://cal.f1.co
+ m/f/28SmvG/3vYLq\n\nFollow us on Instagram\nhttps://cal.f1.com/f/28Smw4/3vY
+ Lq\n\nFollow us on TikTok\nhttps://cal.f1.com/f/28Smwr/3vYLq\n\nManage my E
+ CAL\nhttps://cal.f1.com/f/28Smxm/3vYLq\n\n
+BEGIN:VALARM
+TRIGGER:-PT30M
+ACTION:DISPLAY
+DESCRIPTION:Reminder
+END:VALARM
+BEGIN:VALARM
+TRIGGER:-PT5M
+ACTION:DISPLAY
+DESCRIPTION:Reminder
+END:VALARM
+END:VEVENT
+BEGIN:VEVENT
+LAST-MODIFIED:20260317T233228Z
+DTSTAMP:20260317T233228Z
+LOCATION:China
+X-ECAL-SCHEDULE:63ed7afb4c410f0c653621d8
+DTSTART:20260313T073000Z
+DTEND:20260313T081400Z
+SUMMARY:⏱️ FORMULA 1 HEINEKEN CHINESE GRAND PRIX 2026 - Sprint Qualific
+ ation
+TRANSP:TRANSPARENT
+SEQUENCE:0
+UID:691e9a9e54aa88334d653b2c
+PRIORITY:5
+X-MICROSOFT-CDO-IMPORTANCE:1
+CLASS:PUBLIC
+DESCRIPTION:Follow all the action on F1 TV and F1.com. \n\nUnlock the insid
+ e world of F1 by signing up to F1 Unlocked at F1.com/F1Unlocked\n\nFollow o
+ n the go with F1 TV\nhttps://cal.f1.com/f/28SmxK/3vYLq\n\nVisit the Race Hu
+ b\nhttps://cal.f1.com/f/28SmxZ/3vYLq\n\nFree sign up to F1 Unlocked\nhttps:
+ //cal.f1.com/f/28Smyg/3vYLq\n\nDownload the Official F1 Race Programme App\
+ nhttps://cal.f1.com/f/28SmyT/3vYLq\n\nWear your favourite teams colours wit
+ h F1 store\nhttps://cal.f1.com/f/28Smz8/3vYLq\n\nChoose where to watch a ra
+ ce with F1 Tickets\nhttps://cal.f1.com/f/28Smzq/3vYLq\n\nFollow us on Faceb
+ ook\nhttps://cal.f1.com/f/28SmzG/3vYLq\n\nFollow us on X\nhttps://cal.f1.co
+ m/f/28SmzX/3vYLq\n\nFollow us on Instagram\nhttps://cal.f1.com/f/28SmBg/3vY
+ Lq\n\nFollow us on TikTok\nhttps://cal.f1.com/f/28SmBs/3vYLq\n\nManage my E
+ CAL\nhttps://cal.f1.com/f/28SmCy/3vYLq\n\n
+BEGIN:VALARM
+TRIGGER:-PT30M
+ACTION:DISPLAY
+DESCRIPTION:Reminder
+END:VALARM
+BEGIN:VALARM
+TRIGGER:-PT5M
+ACTION:DISPLAY
+DESCRIPTION:Reminder
+END:VALARM
+END:VEVENT
+END:VCALENDAR
+
