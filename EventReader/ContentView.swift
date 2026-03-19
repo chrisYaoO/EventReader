@@ -8,26 +8,32 @@
 import SwiftUI
 import UniformTypeIdentifiers
 
+struct EventState{
+    var statusMsg = "No file selected"
+    var showImporter = false
+    var didTriggerPressHaptic = false
+    var highlightID: UUID? = nil
+}
+struct ReminderState{
+    var showReminder = false
+    var showSave = false
+    var showSaveMsg = ""
+    var currEvent: Event? = nil
+}
+
 struct ContentView: View {
-    @State private var statusMsg = "No file selected"
-    @State private var showImporter = false
+    @State private var eventState = EventState()
+    @State private var reminderState = ReminderState()
     @State private var eventList: [Event] = []
-    @State private var didTriggerPressHaptic = false
-    @State private var showReminder = false
-    @State private var currEvent: Event? = nil
-    
-//    init(statusMsg: String = "No file selected", showImporter: Bool = false, eventList: [Event] = []) {
-//        self.statusMsg = statusMsg
-//        self.showImporter = showImporter
-//        self.eventList = eventList
-//    }
+    let reminderManager = ReminderManager()
+
     
     var body: some View {
         VStack(spacing: 8) {
             HStack{
-                Text(statusMsg.uppercased())
+                Text(eventState.statusMsg.uppercased())
                     .font(.title3)
-                    .bold()
+//                    .bold()
                 
                 Spacer()
                 
@@ -35,7 +41,7 @@ struct ContentView: View {
 //                    let generator = UIImpactFeedbackGenerator(style: .rigid)
 //                    generator.prepare()
 //                    generator.impactOccurred()
-                    showImporter = true
+                    eventState.showImporter = true
                 }label: {
                     Text("Import")
                         .bold()
@@ -46,42 +52,92 @@ struct ContentView: View {
                 .simultaneousGesture(
                     DragGesture(minimumDistance: 0)
                         .onChanged { _ in
-                            if !didTriggerPressHaptic {
+                            if !eventState.didTriggerPressHaptic {
                                 triggerPressHaptic()
-                                didTriggerPressHaptic = true
+                                eventState.didTriggerPressHaptic = true
                             }
                         }
                         .onEnded { _ in
-                            didTriggerPressHaptic = false
+                            eventState.didTriggerPressHaptic = false
                         }
                 )
             }
             .padding(EdgeInsets(top: 6, leading: 20, bottom: 4, trailing: 20))
             
-            List(eventList){ event in
-                VStack(alignment: .leading, spacing: 4){
-                    Text(event.summary)
+            ScrollViewReader{ proxy in
+                ZStack(alignment: .bottomTrailing){
+                    List(eventList){ event in
+                        VStack(alignment: .leading, spacing: 8){
+                            Text(event.summary)
+                            
+                            HStack{
+//                                Spacer()
+                                Button{
+                                    reminderState.showReminder = true
+                                    reminderState.currEvent = event
+                                }label: {
+                                    Text(Event.date2String(event.dtstart!))
+                                        .foregroundStyle(.blue)
+//                                        .underline()
+
+                                }
+                                .buttonStyle(.plain)
+                            }
+                            
+                            
+                        }
+                        .id(event.id)
+    //                    .frame(maxWidth: .infinity, alignment: .leading)
+                        .listRowBackground(event.id == eventState.highlightID ? Color.gray.opacity(0.25): Color.clear)
+                        
+                    }
+        //            .textSelection(.enabled)
+                    .listStyle(.plain)
+                    .scrollContentBackground(.hidden)
                     
                     Button{
-                        showReminder = true
-                        currEvent = event
+                        if let nextEvent = Event.nextevent(events: eventList){
+                            withAnimation {
+                                proxy.scrollTo(nextEvent.id, anchor: .center)
+                            }
+                            
+                            withAnimation {
+                                eventState.highlightID = nextEvent.id
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+                                    eventState.highlightID = nil
+                                }
+                            }
+                        }
                     }label: {
-                        Text(Event.date2String(event.dtstart!))
-                            .foregroundStyle(.blue)
-                            .underline()
-
+                        ZStack{
+                            Image(systemName: "location")
+                                .font(.title2)
+//                                .shadow(radius: 4)
+                                .frame(width: 60, height: 60)
+                        }
+                        
+                        
                     }
-                    .buttonStyle(.plain)
-                    
+                    .glassEffect(.clear.interactive(), in: .circle)
+                    .shadow(radius: 4)
+                    .padding()
+                    .simultaneousGesture(
+                        DragGesture(minimumDistance: 0)
+                            .onChanged { _ in
+                                if !eventState.didTriggerPressHaptic {
+                                    triggerPressHaptic()
+                                    eventState.didTriggerPressHaptic = true
+                                }
+                            }
+                            .onEnded { _ in
+                                eventState.didTriggerPressHaptic = false
+                            }
+                    )
                 }
             }
-//            .textSelection(.enabled)
-            .listStyle(.plain)
-            .scrollContentBackground(.hidden)
-                
         }
 //        .padding()
-        .fileImporter(isPresented: $showImporter, allowedContentTypes: [.calendarEvent]) { result in
+        .fileImporter(isPresented: $eventState.showImporter, allowedContentTypes: [.calendarEvent]) { result in
             switch result{
             case.success(let url):
                 let granted = url.startAccessingSecurityScopedResource()
@@ -107,43 +163,50 @@ struct ContentView: View {
 
                         DispatchQueue.main.async {
                             eventList = savedData.events
-                            statusMsg = savedData.name
+                            eventState.statusMsg = savedData.name
                         }
                     } catch {
                         DispatchQueue.main.async {
-                            statusMsg = "Save failed"
+                            eventState.statusMsg = "Save failed"
                         }
                         print("Save failed:", error)
                     }
                 }
                 catch{
-                    statusMsg = "read file failed"
+                    eventState.statusMsg = "Read file failed"
                 }
             case.failure(let error):
-                statusMsg = "import failed"
+                eventState.statusMsg = "Import failed"
             }
         }
         .onAppear {
             do{
                 let savedEvents = try SavedData.loadEvents()
                 eventList = savedEvents.events
-                statusMsg = savedEvents.name
+                eventState.statusMsg = savedEvents.name
             }catch{
-                statusMsg = "No saved events yet"
+                eventState.statusMsg = "No events yet"
             }
         }
-        .alert("Add to Reminder?", isPresented: $showReminder){
+        .alert("Add to Reminder?", isPresented: $reminderState.showReminder){
             Button("Cancel", role: .cancel){
                 
             }
             Button("Add"){
-                let reminderManager = ReminderManager()
-                do{
-                    try reminderManager.addReminder(for: currEvent!)
-                }catch{
-                    print(error.localizedDescription)
+                reminderManager.addReminder(for: reminderState.currEvent!){success, errorMsg in
+                    DispatchQueue.main.async{
+                        if success{
+                            reminderState.showSaveMsg = "reminder saved"
+                        }else{
+                            reminderState.showSaveMsg = errorMsg!
+                        }
+                        reminderState.showSave = true
+                    }
                 }
             }
+        }
+        .alert(reminderState.showSaveMsg, isPresented: $reminderState.showSave) {
+            Button("Ok", role: .cancel) { }
         }
     }
 }

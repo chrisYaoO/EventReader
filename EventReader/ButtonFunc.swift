@@ -30,22 +30,17 @@ func triggerPressHaptic() {
 class ReminderManager{
     let eventStore = EKEventStore()
     
-    func addReminder(for event: Event) throws{
-        requestReminderAccess(event)
-        
-    }
-    
-    func requestReminderAccess(_ event: Event) {
+    func addReminder(for event: Event, completion: @escaping (Bool, String?) -> Void) {
         eventStore.requestFullAccessToReminders{ granted, error in
             if granted{
-                self.createReminder(event)
+                self.createReminder(event, completion: completion)
             }else{
-                print("no access")
+                completion(false, "no access to reminder")
             }
         }
     }
         
-    func createReminder(_ event: Event){
+    func createReminder(_ event: Event, completion: @escaping (Bool, String?) -> Void){ 
         let reminder = EKReminder(eventStore: eventStore)
         reminder.calendar = eventStore.defaultCalendarForNewReminders()
         reminder.title = event.summary
@@ -58,8 +53,10 @@ class ReminderManager{
         do {
             try eventStore.save(reminder, commit: true)
             print("saved")
+            completion(true, nil)
         }catch{
             print("save failed: \(error.localizedDescription)")
+            completion(false, error.localizedDescription)
         }
     }
 }

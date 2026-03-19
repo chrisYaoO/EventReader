@@ -72,6 +72,15 @@ struct Event: Codable, Identifiable{
         return outputFormatter.string(from: date)
     }
     
+    static func nextevent(events: [Event]) -> Event?{
+        let now = Date()
+        if let res = events.filter({ ($0.dtstart ?? .distantPast) >= now}).first{
+            return res
+        }else{
+            return events.last
+        }
+    }
+    
 }
 
 struct SavedData: Codable{
