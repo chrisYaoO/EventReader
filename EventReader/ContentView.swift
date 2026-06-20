@@ -7,6 +7,7 @@
 
 import SwiftUI
 import UniformTypeIdentifiers
+import UIKit
 
 struct EventState{
     var statusMsg = "No file selected"
@@ -26,6 +27,7 @@ struct ContentView: View {
     @State private var reminderState = ReminderState()
     @State private var eventList: [Event] = []
     let reminderManager = ReminderManager()
+    private let sampleCalendarFiles = ["event", "Formula_1"]
 
     
     var body: some View {
@@ -95,91 +97,68 @@ struct ContentView: View {
                     .listStyle(.plain)
                     .scrollContentBackground(.hidden)
                     
-                    Button{
-                        if let nextEvent = Event.nextevent(events: eventList){
-                            withAnimation {
-                                proxy.scrollTo(nextEvent.id, anchor: .center)
+                    if !eventList.isEmpty {
+                        Button{
+                            if let nextEvent = Event.nextevent(events: eventList){
+                                withAnimation {
+                                    proxy.scrollTo(nextEvent.id, anchor: .center)
+                                }
+                                
+                                withAnimation {
+                                    eventState.highlightID = nextEvent.id
+                                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+                                        eventState.highlightID = nil
+                                    }
+                                }
+                            }
+                        }label: {
+                            ZStack{
+                                Image(systemName: "location")
+                                    .font(.title2)
+    //                                .shadow(radius: 4)
+                                    .frame(width: 60, height: 60)
                             }
                             
-                            withAnimation {
-                                eventState.highlightID = nextEvent.id
-                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
-                                    eventState.highlightID = nil
+                            
+                        }
+                        .glassEffect(.clear.interactive(), in: .circle)
+                        .shadow(radius: 4)
+                        .padding()
+                        .simultaneousGesture(
+                            DragGesture(minimumDistance: 0)
+                                .onChanged { _ in
+                                    if !eventState.didTriggerPressHaptic {
+                                        triggerPressHaptic()
+                                        eventState.didTriggerPressHaptic = true
+                                    }
                                 }
-                            }
-                        }
-                    }label: {
-                        ZStack{
-                            Image(systemName: "location")
-                                .font(.title2)
-//                                .shadow(radius: 4)
-                                .frame(width: 60, height: 60)
-                        }
-                        
-                        
+                                .onEnded { _ in
+                                    eventState.didTriggerPressHaptic = false
+                                }
+                        )
                     }
-                    .glassEffect(.clear.interactive(), in: .circle)
-                    .shadow(radius: 4)
-                    .padding()
-                    .simultaneousGesture(
-                        DragGesture(minimumDistance: 0)
-                            .onChanged { _ in
-                                if !eventState.didTriggerPressHaptic {
-                                    triggerPressHaptic()
-                                    eventState.didTriggerPressHaptic = true
-                                }
-                            }
-                            .onEnded { _ in
-                                eventState.didTriggerPressHaptic = false
-                            }
-                    )
                 }
             }
         }
 //        .padding()
-        .fileImporter(isPresented: $eventState.showImporter, allowedContentTypes: [.calendarEvent]) { result in
-            switch result{
-            case.success(let url):
+        .sheet(isPresented: $eventState.showImporter) {
+            CalendarDocumentPicker(initialDirectoryURL: documentsURL) { url in
                 let granted = url.startAccessingSecurityScopedResource()
                 defer {
                     if granted {
                         url.stopAccessingSecurityScopedResource()
                     }
                 }
-                do{
-                    let content = try String(contentsOf: url, encoding: .utf8)
-                    let parsedEvents = ICSParser.parseAll(from: content)
-                    let sorted = parsedEvents
-                        .filter {
-                            $0.dtstart != nil
-                        }
-                        .sorted{a,b in
-                            a.dtstart! < b.dtstart!
-                        }
-                    let savedData = SavedData(events: sorted, name: url.deletingPathExtension().lastPathComponent)
-                    
-                    do {
-                        try SavedData.saveEvents(savedData)
-
-                        DispatchQueue.main.async {
-                            eventList = savedData.events
-                            eventState.statusMsg = savedData.name
-                        }
-                    } catch {
-                        DispatchQueue.main.async {
-                            eventState.statusMsg = "Save failed"
-                        }
-                        print("Save failed:", error)
-                    }
+                do {
+                    try importCalendar(from: url)
                 }
                 catch{
                     eventState.statusMsg = "Read file failed"
                 }
-            case.failure(let error):
-                eventState.statusMsg = "Import failed"
             }
         }
         .onAppear {
+            copySampleCalendarsToDocuments()
             do{
                 let savedEvents = try SavedData.loadEvents()
                 eventList = savedEvents.events
@@ -207,6 +186,87 @@ struct ContentView: View {
         }
         .alert(reminderState.showSaveMsg, isPresented: $reminderState.showSave) {
             Button("Ok", role: .cancel) { }
+        }
+    }
+
+    private var documentsURL: URL {
+        FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+    }
+
+    private func importCalendar(from url: URL) throws {
+        let content = try String(contentsOf: url, encoding: .utf8)
+        let sorted = ICSParser.parseAll(from: content)
+            .filter {
+                $0.dtstart != nil
+            }
+            .sorted { a, b in
+                a.dtstart! < b.dtstart!
+            }
+        let savedData = SavedData(events: sorted, name: url.deletingPathExtension().lastPathComponent)
+
+        do {
+            try SavedData.saveEvents(savedData)
+            eventList = savedData.events
+            eventState.statusMsg = savedData.name
+        } catch {
+            eventState.statusMsg = "Save failed"
+            print("Save failed:", error)
+        }
+    }
+
+    private func copySampleCalendarsToDocuments() {
+        for fileName in sampleCalendarFiles {
+            guard let sourceURL = Bundle.main.url(forResource: fileName, withExtension: "ics") else {
+                continue
+            }
+
+            let destinationURL = documentsURL.appendingPathComponent("\(fileName).ics")
+
+            if FileManager.default.fileExists(atPath: destinationURL.path) {
+                continue
+            }
+
+            do {
+                try FileManager.default.copyItem(at: sourceURL, to: destinationURL)
+            } catch {
+                print("Copy sample calendar failed:", error)
+            }
+        }
+    }
+}
+
+struct CalendarDocumentPicker: UIViewControllerRepresentable {
+    let initialDirectoryURL: URL
+    let onPick: (URL) -> Void
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator(onPick: onPick)
+    }
+
+    func makeUIViewController(context: Context) -> UIDocumentPickerViewController {
+        let icsType = UTType(filenameExtension: "ics") ?? .calendarEvent
+        let picker = UIDocumentPickerViewController(forOpeningContentTypes: [icsType, .calendarEvent], asCopy: false)
+        picker.directoryURL = initialDirectoryURL
+        picker.delegate = context.coordinator
+        return picker
+    }
+
+    func updateUIViewController(_ uiViewController: UIDocumentPickerViewController, context: Context) {
+    }
+
+    final class Coordinator: NSObject, UIDocumentPickerDelegate {
+        let onPick: (URL) -> Void
+
+        init(onPick: @escaping (URL) -> Void) {
+            self.onPick = onPick
+        }
+
+        func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
+            guard let url = urls.first else {
+                return
+            }
+
+            onPick(url)
         }
     }
 }
